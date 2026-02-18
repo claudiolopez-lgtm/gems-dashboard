@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Automated Gems — Content Performance Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.7.3/Recharts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f1a; color: #e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, Cell } = Recharts;
+
+const RAW = [
+  { title: "Aumenta tus ingresos más de lo que imaginas", en: "Boost your income beyond what you imagine", starts: 7663, finishes: 5740, conversion: 74.91, rating: 4.57, narrator: "Bryan" },
+  { title: "Habla como un CEO", en: "Speak like a CEO", starts: 5506, finishes: 3945, conversion: 71.65, rating: 4.28, narrator: "Alberto" },
+  { title: "Aplica el estoicismo a tu vida diaria", en: "Apply stoicism to your daily life", starts: 2810, finishes: 2133, conversion: 75.91, rating: 4.57, narrator: "Bryan" },
+  { title: "Así funciona el TDAH", en: "How ADHD actually works", starts: 2307, finishes: 1586, conversion: 68.75, rating: 4.31, narrator: "Bryan" },
+  { title: "Comportamientos tóxicos en relaciones", en: "Toxic behaviors that destroy relationships", starts: 2197, finishes: 1551, conversion: 70.60, rating: 4.55, narrator: "Katherine" },
+  { title: "¿Nuevo en IA? Lo que debes saber", en: "New to AI? What you need to know", starts: 2165, finishes: 1662, conversion: 76.77, rating: 4.33, narrator: "Bryan" },
+  { title: "Piensa como un millonario", en: "Think like a millionaire", starts: 1924, finishes: 1523, conversion: 79.16, rating: 4.68, narrator: "Alberto" },
+  { title: "Aprende más rápido (neurociencia)", en: "Learn faster with neuroscience", starts: 1843, finishes: 1268, conversion: 68.80, rating: 4.44, narrator: "Katherine" },
+  { title: "Persona segura de sí misma", en: "Become a confident person", starts: 1777, finishes: 1378, conversion: 77.55, rating: 4.58, narrator: "Bryan" },
+  { title: "Da propósito a tu vida", en: "Give purpose to your life", starts: 1522, finishes: 1137, conversion: 74.70, rating: 4.50, narrator: "Katherine" },
+  { title: "Mentalidad positiva con afirmaciones", en: "Build a positive mindset with affirmations", starts: 1427, finishes: 1051, conversion: 73.65, rating: 4.54, narrator: "Katherine" },
+  { title: "Exprésate mejor en cualquier situación", en: "Express yourself better in any situation", starts: 1415, finishes: 1146, conversion: 80.99, rating: 4.55, narrator: "Bryan" },
+  { title: "Rutina de ejercicio que puedas mantener", en: "A workout routine you can actually keep", starts: 1379, finishes: 1009, conversion: 73.17, rating: 4.58, narrator: "Bryan" },
+  { title: "Elimina hábitos que te agotan", en: "Eliminate habits that drain you", starts: 1375, finishes: 1075, conversion: 78.18, rating: 4.59, narrator: "Bryan" },
+  { title: "Vende lo que quieras a quien quieras", en: "Sell anything to anyone", starts: 1332, finishes: 1036, conversion: 77.78, rating: 4.51, narrator: "Bryan" },
+  { title: "Relación más sana con la comida", en: "Build a healthier relationship with food", starts: 1193, finishes: 807, conversion: 67.64, rating: 4.22, narrator: "Katherine" },
+  { title: "Cómo ser más visible en el trabajo", en: "How to be more visible at work", starts: 1150, finishes: 831, conversion: 72.26, rating: 4.43, narrator: "Alberto" },
+  { title: "No vayas detrás de nadie", en: "Don't chase anyone", starts: 1146, finishes: 914, conversion: 79.76, rating: 4.48, narrator: "Katherine" },
+  { title: "Mañanas más productivas", en: "More productive mornings", starts: 1079, finishes: 872, conversion: 80.82, rating: 4.33, narrator: "Bryan" },
+  { title: "Fin de relación como nuevo comienzo", en: "The end of a relationship as a fresh start", starts: 1066, finishes: 804, conversion: 75.42, rating: 4.41, narrator: "Katherine" },
+  { title: "Sustituye redes sociales por crecimiento", en: "Replace social media with personal growth", starts: 1008, finishes: 780, conversion: 77.38, rating: 4.41, narrator: "Bryan" },
+  { title: "Conoce mejor tu sexualidad", en: "Understand your sexuality better", starts: 907, finishes: 644, conversion: 71.00, rating: 4.23, narrator: "Katherine" },
+  { title: "Transforma tus patrones emocionales", en: "Recognize and transform your emotional patterns", starts: 887, finishes: 657, conversion: 74.07, rating: 4.67, narrator: "Katherine" },
+  { title: "Explora y comprende tu sexualidad", en: "Explore and understand your sexuality", starts: 851, finishes: 508, conversion: 59.69, rating: 4.61, narrator: "Katherine" },
+  { title: "Amor propio sin narcisismo", en: "Self-love without narcissism", starts: 813, finishes: 617, conversion: 75.89, rating: 4.57, narrator: "Katherine" },
+  { title: "El poder de la gratitud", en: "The power of gratitude", starts: 706, finishes: 568, conversion: 80.45, rating: 4.64, narrator: "Katherine" },
+  { title: "Hábitos saludables que se mantengan", en: "Healthy habits that actually stick", starts: 693, finishes: 536, conversion: 77.34, rating: 4.59, narrator: "Bryan" },
+  { title: "Rutina de noche para tu estilo de vida", en: "A night routine that fits your lifestyle", starts: 585, finishes: 413, conversion: 70.60, rating: 4.65, narrator: "Bryan" },
+  { title: "Dejar de perder tiempo en redes", en: "Stop wasting time on social media", starts: 509, finishes: 387, conversion: 76.03, rating: 4.46, narrator: "Bryan" },
+  { title: "Cómo criar a un ganador", en: "How to raise a winner", starts: 490, finishes: 363, conversion: 74.08, rating: 4.55, narrator: "Bryan" },
+  { title: "Entiende mejor a tu hijo adolescente", en: "Better understand your teenager", starts: 482, finishes: 323, conversion: 67.01, rating: 4.38, narrator: "Katherine" },
+  { title: "Exprésate como una jefa", en: "Express yourself like a boss", starts: 417, finishes: 317, conversion: 76.02, rating: 4.41, narrator: "Valeria" },
+  { title: "Equilibrio en un mundo acelerado", en: "Find balance in a fast-paced world", starts: 389, finishes: 300, conversion: 77.12, rating: 4.59, narrator: "Bryan" },
+  { title: "Educar sin gritar", en: "Parenting without yelling", starts: 323, finishes: 234, conversion: 72.45, rating: 4.55, narrator: "Alberto" },
+  { title: "Aprende mejor gracias a la ficción", en: "Learn better through fiction", starts: 199, finishes: 120, conversion: 60.30, rating: 4.14, narrator: "Bryan" },
+  { title: "Cuidar a tu bebé desde el primer día", en: "Care for your baby from day one", starts: 79, finishes: 47, conversion: 59.49, rating: 4.64, narrator: "Katherine" },
+];
+
+const COLORS = { Bryan: "#6366f1", Katherine: "#f59e0b", Alberto: "#10b981", Valeria: "#ec4899" };
+
+const KPI = ({ label, value, sub, color }) => (
+  <div style={{ background: "#1e1e2e", borderRadius: 12, padding: "20px 24px", flex: 1, minWidth: 160 }}>
+    <div style={{ color: "#94a3b8", fontSize: 13, marginBottom: 6 }}>{label}</div>
+    <div style={{ color: color || "#e2e8f0", fontSize: 28, fontWeight: 700 }}>{value}</div>
+    {sub && <div style={{ color: "#64748b", fontSize: 12, marginTop: 4 }}>{sub}</div>}
+  </div>
+);
+
+const Tab = ({ active, label, onClick }) => (
+  <button onClick={onClick} style={{
+    background: active ? "#6366f1" : "transparent", color: active ? "#fff" : "#94a3b8",
+    border: "1px solid " + (active ? "#6366f1" : "#334155"), borderRadius: 8,
+    padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 500, transition: "all 0.2s"
+  }}>{label}</button>
+);
+
+const LangToggle = ({ lang, setLang }) => (
+  <div style={{ display: "inline-flex", background: "#1e1e2e", borderRadius: 6, padding: 2, gap: 2, marginLeft: 12, verticalAlign: "middle" }}>
+    {["ES", "EN"].map(l => (
+      <button key={l} onClick={() => setLang(l)} style={{
+        background: lang === l ? "#334155" : "transparent", color: lang === l ? "#e2e8f0" : "#64748b",
+        border: "none", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: 11, fontWeight: 600, transition: "all 0.15s"
+      }}>{l}</button>
+    ))}
+  </div>
+);
+
+function Dashboard() {
+  const [tab, setTab] = useState("overview");
+  const [sortKey, setSortKey] = useState("starts");
+  const [sortDir, setSortDir] = useState("desc");
+  const [narratorFilter, setNarratorFilter] = useState("All");
+  const [lang, setLang] = useState("ES");
+
+  const t = (d) => lang === "EN" ? d.en : d.title;
+  const narrators = ["All", ...Object.keys(COLORS)];
+  const filtered = narratorFilter === "All" ? RAW : RAW.filter(d => d.narrator === narratorFilter);
+
+  const totalStarts = filtered.reduce((s, d) => s + d.starts, 0);
+  const totalFinishes = filtered.reduce((s, d) => s + d.finishes, 0);
+  const avgConversion = (filtered.reduce((s, d) => s + d.conversion, 0) / filtered.length).toFixed(1);
+  const avgRating = (filtered.reduce((s, d) => s + d.rating, 0) / filtered.length).toFixed(2);
+
+  const narratorStats = useMemo(() => {
+    const map = {};
+    RAW.forEach(d => {
+      if (!map[d.narrator]) map[d.narrator] = { narrator: d.narrator, gems: 0, totalStarts: 0, totalFinishes: 0, convSum: 0, ratingSum: 0 };
+      map[d.narrator].gems++;
+      map[d.narrator].totalStarts += d.starts;
+      map[d.narrator].totalFinishes += d.finishes;
+      map[d.narrator].convSum += d.conversion;
+      map[d.narrator].ratingSum += d.rating;
+    });
+    return Object.values(map).map(n => ({
+      ...n, avgConversion: +(n.convSum / n.gems).toFixed(2), avgRating: +(n.ratingSum / n.gems).toFixed(2),
+    })).sort((a, b) => b.totalStarts - a.totalStarts);
+  }, []);
+
+  const sorted = useMemo(() =>
+    [...filtered].sort((a, b) => sortDir === "desc" ? b[sortKey] - a[sortKey] : a[sortKey] - b[sortKey]),
+    [filtered, sortKey, sortDir]
+  );
+
+  const topConversion = [...filtered].sort((a, b) => b.conversion - a.conversion).slice(0, 10).map(d => ({ ...d, label: t(d) }));
+  const bottomConversion = [...filtered].sort((a, b) => a.conversion - b.conversion).slice(0, 10).map(d => ({ ...d, label: t(d) }));
+  const scatterData = filtered.map(d => ({ ...d, x: d.conversion, y: d.rating, label: t(d) }));
+
+  const handleSort = (key) => {
+    if (sortKey === key) setSortDir(d => d === "desc" ? "asc" : "desc");
+    else { setSortKey(key); setSortDir("desc"); }
+  };
+
+  const SortIcon = ({ k }) => sortKey === k ? (sortDir === "desc" ? " ▾" : " ▴") : "";
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload?.[0]) return null;
+    const d = payload[0].payload;
+    return (
+      <div style={{ background: "#1e1e2e", border: "1px solid #334155", borderRadius: 8, padding: 12, fontSize: 12, maxWidth: 260 }}>
+        <div style={{ fontWeight: 600, color: "#e2e8f0", marginBottom: 2 }}>{t(d)}</div>
+        {lang === "EN" && <div style={{ color: "#475569", fontSize: 10, marginBottom: 4, fontStyle: "italic" }}>{d.title}</div>}
+        <div style={{ color: COLORS[d.narrator] }}>🎙 {d.narrator}</div>
+        <div style={{ color: "#94a3b8", marginTop: 4 }}>Finish Rate: <b style={{ color: "#e2e8f0" }}>{d.conversion}%</b></div>
+        <div style={{ color: "#94a3b8" }}>Rating: <b style={{ color: "#e2e8f0" }}>{d.rating}</b></div>
+        <div style={{ color: "#94a3b8" }}>Starts: <b style={{ color: "#e2e8f0" }}>{d.starts.toLocaleString()}</b></div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ background: "#0f0f1a", color: "#e2e8f0", minHeight: "100vh", fontFamily: "'Inter', system-ui, sans-serif", padding: 24 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, display: "inline" }}>🔮 Automated Gems — Content Performance Report</h1>
+          <LangToggle lang={lang} setLang={setLang} />
+          <p style={{ color: "#64748b", fontSize: 13, margin: "4px 0 0" }}>Dec 15, 2025 – Jan 31, 2026</p>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ color: "#64748b", fontSize: 13, marginRight: 4 }}>Narrator:</span>
+          {narrators.map(n => (
+            <button key={n} onClick={() => setNarratorFilter(n)} style={{
+              background: narratorFilter === n ? (n === "All" ? "#334155" : COLORS[n] + "22") : "transparent",
+              color: n === "All" ? "#e2e8f0" : COLORS[n],
+              border: "1px solid " + (narratorFilter === n ? (n === "All" ? "#475569" : COLORS[n]) : "#334155"),
+              borderRadius: 20, padding: "5px 14px", cursor: "pointer", fontSize: 12, fontWeight: 500
+            }}>{n === "All" ? "All Narrators" : n}</button>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+          <KPI label="Total Gems" value={filtered.length} />
+          <KPI label="Total Starts" value={totalStarts.toLocaleString()} sub={totalFinishes.toLocaleString() + " finishes"} />
+          <KPI label="Avg Finish Rate" value={avgConversion + "%"} color="#6366f1" />
+          <KPI label="Avg Rating" value={avgRating} color="#f59e0b" sub="out of 5.0" />
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+          {[["overview","Overview"],["narrators","By Narrator"],["scatter","Rating vs Finish Rate"],["table","Full Table"]].map(([k,l]) =>
+            <Tab key={k} active={tab===k} label={l} onClick={() => setTab(k)} />
+          )}
+        </div>
+
+        {tab === "overview" && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+              <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20 }}>
+                <h3 style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 12px" }}>🏆 Top 10 — Finish Rate</h3>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={topConversion} layout="vertical" margin={{ left: 10, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis type="number" domain={[55,85]} tick={{ fill:"#64748b", fontSize:11 }} tickFormatter={v=>v+"%"} />
+                    <YAxis type="category" dataKey="label" width={180} tick={{ fill:"#94a3b8", fontSize:10 }} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="conversion" radius={[0,4,4,0]}>
+                      {topConversion.map((d,i) => <Cell key={i} fill={COLORS[d.narrator]} fillOpacity={0.8} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20 }}>
+                <h3 style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 12px" }}>⚠️ Bottom 10 — Finish Rate</h3>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={bottomConversion} layout="vertical" margin={{ left: 10, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis type="number" domain={[55,85]} tick={{ fill:"#64748b", fontSize:11 }} tickFormatter={v=>v+"%"} />
+                    <YAxis type="category" dataKey="label" width={180} tick={{ fill:"#94a3b8", fontSize:10 }} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="conversion" radius={[0,4,4,0]}>
+                      {bottomConversion.map((d,i) => <Cell key={i} fill={COLORS[d.narrator]} fillOpacity={0.5} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20 }}>
+              <h3 style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 12px" }}>📊 Top 20 Gems — Starts Volume</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={sorted.slice(0,20).map(d=>({...d,label:t(d)}))} margin={{ left:10, right:20, bottom:60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="label" tick={{ fill:"#94a3b8", fontSize:9 }} angle={-40} textAnchor="end" interval={0} height={80} />
+                  <YAxis tick={{ fill:"#64748b", fontSize:11 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="starts" name="Starts" radius={[4,4,0,0]}>
+                    {sorted.slice(0,20).map((d,i) => <Cell key={i} fill={COLORS[d.narrator]} fillOpacity={0.75} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {tab === "narrators" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20 }}>
+              <h3 style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 12px" }}>Avg Finish Rate by Narrator</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={narratorStats} margin={{ bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="narrator" tick={{ fill:"#94a3b8", fontSize:12 }} />
+                  <YAxis domain={[65,80]} tick={{ fill:"#64748b", fontSize:11 }} tickFormatter={v=>v+"%"} />
+                  <Tooltip formatter={v=>v+"%"} contentStyle={{ background:"#1e1e2e", border:"1px solid #334155", borderRadius:8 }} />
+                  <Bar dataKey="avgConversion" name="Avg Finish Rate" radius={[6,6,0,0]}>
+                    {narratorStats.map((d,i) => <Cell key={i} fill={COLORS[d.narrator]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20 }}>
+              <h3 style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 12px" }}>Avg Rating by Narrator</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={narratorStats} margin={{ bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="narrator" tick={{ fill:"#94a3b8", fontSize:12 }} />
+                  <YAxis domain={[4.2,4.7]} tick={{ fill:"#64748b", fontSize:11 }} />
+                  <Tooltip contentStyle={{ background:"#1e1e2e", border:"1px solid #334155", borderRadius:8 }} />
+                  <Bar dataKey="avgRating" name="Avg Rating" radius={[6,6,0,0]}>
+                    {narratorStats.map((d,i) => <Cell key={i} fill={COLORS[d.narrator]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20, gridColumn: "1 / -1" }}>
+              <h3 style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 16px" }}>Narrator Summary</h3>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #334155" }}>
+                    {["Narrator","Gems","Total Starts","Total Finishes","Avg Finish Rate","Avg Rating"].map(h =>
+                      <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "#64748b", fontWeight: 500 }}>{h}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {narratorStats.map(n => (
+                    <tr key={n.narrator} style={{ borderBottom: "1px solid #1e293b" }}>
+                      <td style={{ padding: "10px 12px" }}><span style={{ color: COLORS[n.narrator], fontWeight: 600 }}>● {n.narrator}</span></td>
+                      <td style={{ padding: "10px 12px" }}>{n.gems}</td>
+                      <td style={{ padding: "10px 12px" }}>{n.totalStarts.toLocaleString()}</td>
+                      <td style={{ padding: "10px 12px" }}>{n.totalFinishes.toLocaleString()}</td>
+                      <td style={{ padding: "10px 12px", fontWeight: 600 }}>{n.avgConversion}%</td>
+                      <td style={{ padding: "10px 12px", fontWeight: 600 }}>{n.avgRating}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab === "scatter" && (
+          <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20 }}>
+            <h3 style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 4px" }}>Rating vs Finish Rate</h3>
+            <p style={{ color: "#475569", fontSize: 12, margin: "0 0 16px" }}>Bubble size = audio starts volume. Hover for details.</p>
+            <ResponsiveContainer width="100%" height={420}>
+              <ScatterChart margin={{ left: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis type="number" dataKey="x" name="Finish Rate" domain={[55,85]} tick={{ fill:"#64748b", fontSize:11 }} label={{ value:"Finish Rate %", position:"bottom", fill:"#64748b", fontSize:12 }} />
+                <YAxis type="number" dataKey="y" name="Rating" domain={[4.1,4.75]} tick={{ fill:"#64748b", fontSize:11 }} label={{ value:"Rating", angle:-90, position:"insideLeft", fill:"#64748b", fontSize:12 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Scatter data={scatterData}>
+                  {scatterData.map((d,i) => <Cell key={i} fill={COLORS[d.narrator]} fillOpacity={0.7} r={Math.max(5, Math.sqrt(d.starts/15))} />)}
+                </Scatter>
+              </ScatterChart>
+            </ResponsiveContainer>
+            <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8 }}>
+              {Object.entries(COLORS).map(([n,c]) => <span key={n} style={{ fontSize:12, color:c }}>● {n}</span>)}
+            </div>
+          </div>
+        )}
+
+        {tab === "table" && (
+          <div style={{ background: "#1e1e2e", borderRadius: 12, padding: 20, overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid #334155" }}>
+                  {[["title","Title"],["narrator","Narrator"],["starts","Starts"],["finishes","Finishes"],["conversion","Finish Rate"],["rating","Rating"]].map(([k,l]) => (
+                    <th key={k} onClick={() => handleSort(k)} style={{
+                      padding: "10px 12px", textAlign: k==="title"?"left":"center",
+                      color: sortKey===k?"#6366f1":"#64748b", cursor: "pointer", fontWeight: 600,
+                      whiteSpace: "nowrap", userSelect: "none", fontSize: 12
+                    }}>{l}<SortIcon k={k} /></th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((d,i) => (
+                  <tr key={i} style={{ borderBottom: "1px solid #1e293b", transition: "background 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.background="#262640"}
+                    onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                    <td style={{ padding: "10px 12px", maxWidth: 280 }}>
+                      <div>{t(d)}</div>
+                      {lang === "EN" && <div style={{ color: "#475569", fontSize: 10, fontStyle: "italic", marginTop: 2 }}>{d.title}</div>}
+                    </td>
+                    <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                      <span style={{ color: COLORS[d.narrator], fontWeight: 500 }}>{d.narrator}</span>
+                    </td>
+                    <td style={{ padding: "10px 12px", textAlign: "center" }}>{d.starts.toLocaleString()}</td>
+                    <td style={{ padding: "10px 12px", textAlign: "center" }}>{d.finishes.toLocaleString()}</td>
+                    <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600 }}>
+                      <span style={{
+                        background: d.conversion>=77?"#10b98122":d.conversion<68?"#ef444422":"#f59e0b22",
+                        color: d.conversion>=77?"#10b981":d.conversion<68?"#ef4444":"#f59e0b",
+                        padding:"2px 8px", borderRadius:12, fontSize:12
+                      }}>{d.conversion}%</span>
+                    </td>
+                    <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600 }}>
+                      <span style={{
+                        background: d.rating>=4.55?"#6366f122":d.rating<4.3?"#ef444422":"#f59e0b22",
+                        color: d.rating>=4.55?"#6366f1":d.rating<4.3?"#ef4444":"#f59e0b",
+                        padding:"2px 8px", borderRadius:12, fontSize:12
+                      }}>{d.rating}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<Dashboard />, document.getElementById("root"));
+</script>
+</body>
+</html>
